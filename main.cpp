@@ -1,17 +1,21 @@
 #include <iostream>
-#include <string>       
+#include <string>   
+#include <fstream>    
 
 using namespace std;
 
 void casella(int a, int& riga, int& colonna){
+ 
     if(a<1 || a>9){
         cout<<"scelta non valida"<<endl;
-        exit(0);
+        cout<<"Scegli un numero da 1 a 9"<<endl;
+        return;
     }
     else{
     riga = (a - 1)/3 ;    //(3 - 1) / 3 = 2 / 3 = 0 (divisione intera)
     colonna = (a - 1)%3 ; // (3 - 1) % 3 = 2 % 3 = 2 (perchè 2 è 0 volte tre, quindi risultato rimane 2) 
     }
+
 }
 
 void clearGrigglia(){
@@ -32,7 +36,18 @@ void grigliaAggiornata(char griglia[3][3]){
 }
 
 bool winCheck(const int win[8][3][2], char griglia[3][3]){
-    
+    int conteggioX = 0;
+    int conteggioO = 0;
+
+    ifstream infile("statistica.txt");
+    if (infile.is_open()){
+        string skip;
+        infile >> skip >> skip >> skip >> conteggioX; //la struttura dentro file statistica.txt è: Win di X/O: <conteggioX/O>
+                                                      //per prendere solo il valore del conteggio bisogna skippare "Win" "di" "X/O"
+        infile >> skip >> skip >> skip >> conteggioO;
+        infile.close();
+    }
+
     for (int i = 0; i < 8; i++) {
         int r1 = win[i][0][0], c1 = win[i][0][1];
         int r2 = win[i][1][0], c2 = win[i][1][1];
@@ -41,11 +56,49 @@ bool winCheck(const int win[8][3][2], char griglia[3][3]){
     if (griglia[r1][c1] != ' ' &&
         griglia[r1][c1] == griglia[r2][c2] &&
         griglia[r2][c2] == griglia[r3][c3]) {
-        cout<<"Ha vinto: "<<griglia[r3][c3]<<endl;  // prende l'ultimo elemento (X or O) che ha vinto
+        char elemento = griglia[r3][c3];
+        cout<<"Ha vinto: "<<elemento<<endl;  // prende l'ultimo elemento (X or O) che ha vinto
+        
+        if(elemento == 'X'){
+            conteggioX++;
+        }else if (elemento == 'O')conteggioO++;
+        
+        ofstream file("statistica.txt");
+
+        if(file.is_open()){
+            file<<"Win di X: "<<conteggioX<<endl;
+            file<<"Win di O: "<<conteggioO<<endl;
+            file.close();
+            cout << "Salvato in statistica.txt" << endl;
+        }
         return true;
-     } 
-    }
+        } 
+
+     }
+
  return false;
+}
+
+void punteggio(){
+    ifstream infile("statistica.txt");
+    string testo;
+    string testoX;
+    string testoO;
+    int puntiX;
+    int puntiO;
+    if (infile.is_open()){
+        while(infile>>testo>>testo>>testoX>>puntiX && infile>>testo>>testo>>testoO>>puntiO){
+            for(int i=0; i<19; i++)cout<<"*";
+            cout<<endl;
+            cout<<"|"<<"Le vincite di "<<testoX<<puntiX<<"|"<<endl;
+            cout<<"|"<<"Le vincite di "<<testoO<<puntiO<<"|"<<endl;
+            for(int i=0; i<19; i++)cout<<"*";
+            cout<<endl;
+    }
+}else cout<<"errore di apertura del file"<<endl;
+
+infile.close();
+
 }
 
 int main() {
@@ -136,6 +189,7 @@ gioco:
             cout<<"Pareggio"<<endl;
         }
 riprova_r:
+    punteggio();
     char riprova;
     cout<<"Vuoi riprovare gioco? (s = si  n = no)"<<endl;
     cin>>riprova;
